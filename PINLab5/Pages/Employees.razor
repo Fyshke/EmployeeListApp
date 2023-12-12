@@ -1,0 +1,92 @@
+﻿@page "/employees"
+@inject EmployeesService employeesService
+
+<h3>Employees List</h3>
+<p>Prikaz svih zaposlenika :D</p>
+@if (employees == null)
+{
+    <p><em>Učitavanje...</em></p>
+}
+else
+{
+    <button @onclick="@Add" class="btn btn-success">Add</button>
+        
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Full Name</th>
+                <th>Department</th>
+                <th>Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var item in employees)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.FullName</td>
+                    <td>@item.Department</td>
+                    <td>@item.Salary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@if (employees != null && mode == MODE.Add)
+{
+    <input placeholder="FullName" @bind="@fullname" />
+    <br />
+    <input placeholder="department" @bind="@department" />
+    <br />
+    <input placeholder="salary" @bind="salary" />
+    <br />
+    <button @onclick="@Insert" class="btn btn-warning">Insert</button>
+}
+@code {
+    string id;
+    string fullname;
+    string department;
+    decimal salary;
+
+    private enum MODE {None, Add, EditDelete};
+    MODE mode = MODE.None;
+
+    List<Employee> employees;
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+    protected async Task Load()
+    {
+        employees = await employeesService.GetEmployeesAsync();
+    }
+
+    protected void Add()
+    {
+        ClearFields();
+        mode = MODE.Add;
+    }
+    //ovom metodom resetiramo vrijednosti u varijablama koje nam služe za dohvaćanje podataka od korisnika
+    protected void ClearFields()
+    {
+        id = string.Empty;
+        fullname = string.Empty;
+        department = string.Empty;
+        salary = 0;
+    }
+    protected async Task Insert()
+    {
+        Employee e = new Employee()
+            {
+                Id = Guid.NewGuid().ToString(),
+                FullName = fullname,
+                Department = department,
+                Salary = salary
+            };
+        await employeesService.InsertEmployeeAsync(e);
+        ClearFields();
+        await Load();
+        mode = MODE.None;
+    }
+}
